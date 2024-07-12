@@ -1,0 +1,50 @@
+use Northwind
+----cau 2
+--select CustomerID, CompanyName, ContactName, Address, City 
+--from Customers
+--where City = 'London'
+--cau 3
+--select CustomerID, CompanyName, ContactName, Address, City, ContactTitle 
+--from Customers
+--where ContactTitle ='Sales Manager' and Country ='USA' or ContactTitle ='Owner' and Country ='Mexico'
+--cau 4
+--select CustomerID, CompanyName, ContactName, Address, City, ContactTitle, Country 
+--from Customers
+--where ContactTitle like '%Manager' and Country ='USA' or (not ContactTitle ='Owner' and Country ='Mexico')
+--like (%,_)
+--cau 5
+--set dateformat dmy
+--select OrderID, OrderDate, CustomerID, EmployeeID
+--from Orders
+--where OrderDate between '1/1/1997' and '30/6/1997'
+--cau 6
+--set dateformat dmy
+--select OrderID, OrderDate, CustomerID, EmployeeID
+--from Orders
+--where OrderDate between '1/2/1997' and '28/2/1997'
+--cau 7
+--select OrderID, OrderDate, Freight 
+--from Orders
+--where ShipCountry='UK' and EmployeeID = '2' and YEAR(OrderDate) = '1997'
+--cau 8
+--select ProductID, ProductName
+--from Products
+--where ProductName like 'Ch%'
+--cau 9
+--select ProductID, UnitPrice, UnitsInStock
+--from Products
+--where Discontinued != 'False' and UnitsInStock > 0
+--cau 10
+--select CompanyName, ContactName, Country, Phone, Fax
+--from Customers
+--where Country != 'USA'
+--cau 11
+--select CompanyName, ContactName, Country, Phone, Fax 
+--from Customers
+--where Country != 'Brazil, Italy, Spain, Venezuela, UK'
+--cau 12
+select OrderID, Customer, Employee, Orderdate, ShipCountry, Shipdate, Freight
+from Orders, 
+
+
+
