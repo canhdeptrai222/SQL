@@ -39,12 +39,105 @@ use Northwind
 --from Customers
 --where Country != 'USA'
 --cau 11
---select CompanyName, ContactName, Country, Phone, Fax 
---from Customers
---where Country != 'Brazil, Italy, Spain, Venezuela, UK'
+select CompanyName, ContactName, Country, Phone, Fax 
+from Customers
+where Country not in ('Brazil', 'Italy', 'Spain', 'Venezuela','UK')
 --cau 12
-select OrderID, Customer, Employee, Orderdate, ShipCountry, Shipdate, Freight
-from Orders, 
+select OrderID, o.CustomerID, e.EmployeeID, Orderdate, ShipCountry, Shippeddate, Freight
+from Orders o, Employees e, Customers c
+where (o.CustomerID = c.CustomerID and o.EmployeeID = e.EmployeeID)
+and (ShipCountry = 'USA' and Freight > 300 or ShipCountry = 'Argentina'
+and Freight < 5)
+order by e.EmployeeID desc
+--cau 14
+set dateformat dmy
+select OrderID, OrderDate, o.CustomerID, e.EmployeeID, Freight, Freight * 1.1 as NewFreight
+from Orders o, Employees e, Customers c
+where OrderDate between '1/4/1997' and '30/4/1997' and (o.CustomerID = c.CustomerID and o.EmployeeID = e.EmployeeID)
+--cau 15
+select ProductID, ProductName, x.SupplierID, UnitPrice, UnitsInStock, Total = x.UnitPrice * x.UnitsInStock, y.Fax
+from Products x, Suppliers y
+where x.Discontinued = 1 and x.SupplierID = y.SupplierID
+--cau 16
+select Name = TitleOfCourtesy + ' ' + LEFT(LastName, 1) + ' ' + FirstName, Hiredate, Title, BirthDate, HomePhone
+from Employees
+where Year(HireDate) <= 1993
+--cau 17
+select OrderID, OrderDate, 'Customer' = CompanyName , Employee = LastName
+from Orders o, Customers c, Employees e
+where Month(OrderDate) = 4 and o.EmployeeID = e.EmployeeID and c.CustomerID = o.CustomerID
+--cau 18
+select OrderID, OrderDate, 'Customer' = CompanyName , Employee = LastName
+from Orders o, Customers c, Employees e
+where YEAR(OrderDate) % 2 = 0 and o.EmployeeID = e.EmployeeID and c.CustomerID = o.CustomerID
+--cau 19
+select OrderID, OrderDate, 'Customer' = CompanyName , Employee = LastName
+from Orders o, Customers c, Employees e
+where DAY(OrderDate) in (5,13,14,23) and o.EmployeeID = e.EmployeeID and c.CustomerID = o.CustomerID
+--cau 20
+select od.OrderID, ProductName, p.UnitPrice, Quantity,  p.UnitPrice* Quantity as ThanhTien, Discount,  p.UnitPrice* Quantity * Discount as TienGiamGia, TienPhaiTra =  p.UnitPrice* Quantity -  p.UnitPrice* Quantity * Discount
+from [Order Details] od, Products p, Orders o
+where YEAR(OrderDate) = 1997 and od.ProductID = p.ProductID and o.OrderID = od.OrderID
+--cau 21
+select od.OrderID, ProductName, p.UnitPrice, Quantity,  p.UnitPrice* Quantity as ThanhTien, Discount,  p.UnitPrice* Quantity * Discount as TienGiamGia, 'TienPhaiTra' =  p.UnitPrice* Quantity -  p.UnitPrice* Quantity * Discount
+from [Order Details] od, Products p, Orders o
+where YEAR(OrderDate) = 1997 and od.ProductID = p.ProductID and o.OrderID = od.OrderID and Discount > 0 and p.UnitPrice* Quantity -  p.UnitPrice* Quantity * Discount < 50
+--cau 22
+select COUNT(ProductID)  as SLSP, MAX(UnitPrice) as mac, MIN(UnitPrice) miin, AVG(UnitPrice) as TB
+from Products
+--cau 23
+select COUNT(ProductID)  as SLSP, MAX(UnitPrice) as mac, MIN(UnitPrice) miin, AVG(UnitPrice) as TB
+from Products
+group by CategoryID
+--cau 24
+select Count(OrderID) as 'Số Đơn đặt hàng'
+from Orders
+where ShipCountry in ('Belgium', 'Canada', 'UK')
+--cau 25
+select AVG(UnitPrice) as TB, c.CategoryID, CategoryName
+from Products p, Categories c
+where c.CategoryID = p.CategoryID and UnitPrice > 30
+group by c.CategoryID, CategoryName
+--cau 26
+select AVG(UnitPrice) as 'Đơn giá tb', CategoryID as 'Ma SP'
+from Products
+where UnitPrice > 30
+group by CategoryID
+--order by 1 asc
+select * 
+from Categories
+where CategoryID in (
+ select CategoryID
+ from Products
+ group by CategoryID
+ having AVG(UnitPrice) > 30
+ )
 
+--cau 27
+select c.CategoryName, SUM(od.UnitPrice * Quantity * (1 - Discount)) as salesTotal
+from Products p, Categories c, [Order Details] od, Orders o
+where YEAR(OrderDate) = 1996 and o.OrderID = od.OrderID and
+od.ProductID = p.ProductID and p.CategoryID = c.CategoryID 
+group by CategoryName
+--cau 28
+select CompanyName, Freight, SUM(od.UnitPrice * Quantity * (1 - Discount)) as salesTotal,
+'Percent' = Freight / SUM(od.UnitPrice * Quantity * (1 - Discount))
+from Customers c, Orders o, [Order Details] od
+where YEAR(OrderDate) = 1997 and od.OrderID = o.OrderID and o.CustomerID = c.CustomerID
+group by CompanyName, Freight
+--cau 29
+declare @TenCT nvarchar(40)
+set @TenCT = '%h%'
+select *
+from Customers
+where CompanyName like @TenCT
 
+--cau 30
+declare @ngayBD datetime, @ngayKT datetime
+set @ngayBD='1/1/1997'
+set @ngayKT='1/9/1997'
 
+set dateformat dmy
+select *
+from Orders
+where OrderDate between @ngayBD and @ngayKT
