@@ -141,3 +141,4 @@ set dateformat dmy
 select *
 from Orders
 where OrderDate between @ngayBD and @ngayKT
+--cau 35 36 trg dth
