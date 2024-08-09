@@ -142,3 +142,158 @@ select *
 from Orders
 where OrderDate between @ngayBD and @ngayKT
 --cau 35 36 trg dth
+
+==================================================================================================
+use Northwind
+--MAKE TABLE QUERY
+--cau 1
+select * into CacKhachHangMy
+from Customers
+
+select *
+from CacKhachHangMy
+--cau 2
+select top 5 e.EmployeeID, e.FirstName + ' ' + e.LastName as 'FullName' 
+, count(OrderID) as 'Đơn hàng' into NamNhanVienGioi
+from Employees e, Orders o
+where e.EmployeeID = o.EmployeeID
+group by e.EmployeeID, e.FirstName + ' ' + e.LastName
+order by 3 desc
+
+select * 
+from NamNhanVienGioi
+--cau 3
+select top 10 c.CustomerID, c.CompanyName, c.Address + ' ' + c.City + ' ' + c.Country as 'address'
+,count(OrderID) as SL into MuoiKhachHang
+from Customers c, Orders o
+where c.CustomerID = o.CustomerID
+group by c.CustomerID, c.CompanyName, c.Address + ' ' + c.City + ' ' + c.Country
+order by SL desc
+
+select * 
+from MuoiKhachHang
+-- cau 4
+select top 5 ShipCountry as 'Country', COUNT(od.ProductID) as 'SL'
+into Top5QGMuaHang
+from Orders o, [Order Details] od 
+where o.OrderID = od.OrderID
+group by ShipCountry
+order by SL desc
+
+select *
+from Top5QGMuaHang
+
+--cau 5
+select top 5 ShipCountry as 'Country', COUNT(od.ProductID) as 'SL'
+into Top5QGItMuaHang
+from Orders o, [Order Details] od 
+where o.OrderID = od.OrderID
+group by ShipCountry
+order by SL 
+
+select *
+from Top5QGItMuaHang
+--APPEND QUERY THÊM 1 HÀNG DỮ LIỆU
+--cau 1
+insert into Categories(CategoryName, Description)
+values (N'Văn phòng phẩm', N'Sách, vở, giấy, bút, mực')
+
+select *
+from Categories
+--cau 4
+
+insert into Employees( LastName,  FirstName)
+values (N'Cảnh', N'Alexander')
+
+select *
+from Employees
+
+--APPEND QUERY THÊM NHIỀU HÀNG DỮ LIỆU 
+--cau 6
+select * into KhachHang
+from Customers
+delete from KhachHang
+
+
+insert into KhachHang
+select *
+from Customers
+where Country = 'USA'
+
+select *
+from KhachHang
+--cau 7
+insert into KhachHang
+select * 
+from Customers
+where CustomerID in (
+   select top 10 c.CustomerID
+   from Customers c, Orders o
+   where c.CustomerID = o.CustomerID
+   group by c.CustomerID
+   order by count(OrderID) desc
+)
+
+--UPDATE QUERY
+--cau 1
+select* into KH
+from Customers
+update Customers
+set Country = 'USA'
+where Country = N'Mỹ'
+--cau 2
+update KH
+set Country = (case 
+                when Country = 'Germany' then N'Đức'
+				else N'Pháp'
+                end)
+where Country in ('Germany','France' )
+
+
+--cau 6
+update KH
+set PostalCode = stuff(PostalCode, 1, 2, '18')
+where Country = N'Đức'
+
+delete KH
+
+insert into KH
+select* 
+from Customers
+
+update KH
+set PostalCode = concat('18', SUBSTRING(PostalCode, 3, len(PostalCode) -2))
+where Country = 'Germany'
+
+
+select *
+from KH     
+--CROSSTAB QUERY
+--cau 1
+select ProductName, [1996], [1997], [1998]
+from(
+		select p.ProductName, YEAR(OrderDate) 'nam', Quantity tongSL
+		from Orders o, [Order Details] od, Products p
+		where o.OrderID = od.OrderID and od.ProductID = p.ProductID
+		and YEAR(OrderDate) between '1996' and '1998')A
+		--group by p.ProductName, YEAR(OrderDate)
+		--)A
+pivot
+(
+    sum(tongSL) for nam in ( [1996], [1997], [1998])
+)B
+
+select CompanyName, 'SumTotal' = ISNULL([1], 0) + ISNULL([2], 0) + 
+ISNULL([3], 0)+ ISNULL([4], 0) ,[1] , [2] , [3] , [4]
+
+from(
+		select CompanyName,
+		UnitPrice * Quantity as DoanhSo,DATEPART(q,OrderDate) as quy
+		from [Order Details] od, Orders o, Customers c
+		where od.OrderID = o.OrderID and o.CustomerID = c.CustomerID
+		and YEAR(OrderDate) = 1997 and Country = 'UK')A
+pivot
+(
+   Sum(DoanhSo) for quy in ([1],[2],[3],[4]) 
+)B
+
