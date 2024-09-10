@@ -654,7 +654,7 @@ DELETE FROM SV WHERE MSSV = '180002'
 SELECT * INTO MH
 FROM MONHOC
 
-UPDATE MH
+UPDATE MONHOC
 SET TENMH = N'Toán rời rạc'
 WHERE TENMH = N'Lý thuyết đồ thị'
 
@@ -688,62 +688,239 @@ ORDER BY SISO DESC
 
 --C3
 
---8-	In danh sách SV theo từng lớp: MSSV, Họ tên SV, Năm sinh, Phái (Nam/Nữ).
+--8-	In danh sách SV theo từng lớp: MSSV, Họ tên SV, 
+--Năm sinh, Phái (Nam/Nữ).
 SELECT L.TENLOP, MSSV, HOTEN, YEAR(NTNS) AS 'NAM SINH', CASE WHEN PHAI = 1 THEN 'NAM'
 WHEN PHAI = 0 THEN N'NỮ' END PHAI
 FROM SINHVIEN S, LOP L
 WHERE S.MALOP = L.MALOP
 
---9-	Cho biết những sinh viên có tuổi ≥ 20, thông tin gồm: Họ tên sinh viên, Ngày sinh, Tuổi.
+--9-	Cho biết những sinh viên có tuổi ≥ 20, thông tin gồm:
+--Họ tên sinh viên, Ngày sinh, Tuổi.
+SELECT HOTEN, YEAR(NTNS) AS N'NGAY SINH', YEAR(GETDATE()) - YEAR(NTNS) AS 'AGE' 
+FROM SINHVIEN
+WHERE YEAR(GETDATE()) - YEAR(NTNS) >= 20
 
 --10-	Liệt kê tên các môn học SV đã dự thi nhưng chưa có điểm.
-
---11-	Liệt kê kết quả học tập của SV có mã số 170001. Hiển thị: MSSV, HoTen, TenMH, Diem.
-
---12-	Liệt kê tên sinh viên và mã môn học mà sv đó đăng ký với điểm trên 7 điểm.
-
+SELECT *
+FROM DIEMSV
+WHERE DIEM IS NULL
+--11-	Liệt kê kết quả học tập của SV có mã số 170001.
+--Hiển thị: MSSV, HoTen, TenMH, Diem.
+SELECT D.MSSV, HOTEN, TENMH, DIEM
+FROM SINHVIEN S, DIEMSV D, MONHOC M
+WHERE S.MSSV = D.MSSV AND D.MAMH = M.MAMH AND D.MSSV = '170001'
+--12-	Liệt kê tên sinh viên và mã môn học mà sv 
+--đó đăng ký với điểm trên 7 điểm.
+SELECT HOTEN, MAMH, DIEM
+FROM SINHVIEN S, DIEMSV D
+WHERE S.MSSV = D.MSSV and DIEM >= 7
 --13-	Liệt tên môn học cùng số lượng SV đã học và đã có điểm.
-
+SELECT TENMH, COUNT(DIEM) AS SL
+FROM MONHOC M, DIEMSV D
+WHERE M.MAMH = D.MAMH
+GROUP BY TENMH
 --14-	Liệt kê tên SV và điểm trung bình của SV đó.
-
+SELECT HOTEN, ROUND(AVG(DIEM), 2) AS 'DIEMTB'
+FROM SINHVIEN S, DIEMSV D
+WHERE S.MSSV = D.MSSV
+GROUP BY HOTEN
 --15-	Liệt kê tên sinh viên đạt điểm cao nhất của môn học ‘Kỹ thuật lập trình’.
-
+SELECT TOP 1 HOTEN , MAX(DIEM) AS 'MAX DIEM'
+FROM SINHVIEN S, DIEMSV D, MONHOC M
+WHERE S.MSSV = D.MSSV AND D.MAMH = M.MAMH AND TENMH = N'Kỹ thuật lập trình'
+GROUP BY HOTEN
+ORDER BY 2 DESC
 --16-	Liệt kê tên SV có điểm trung bình cao nhất.
-
+SELECT TOP 1 HOTEN , AVG(DIEM) AS 'MAX DIEM TB'
+FROM SINHVIEN S, DIEMSV D
+WHERE S.MSSV = D.MSSV
+GROUP BY HOTEN
+ORDER BY 2 DESC
 --17-	Liệt kê tên SV chưa học môn ‘Toán rời rạc’.
+SELECT HOTEN
+FROM SINHVIEN 
+WHERE HOTEN NOT IN(
+ SELECT HOTEN
+ FROM SINHVIEN S, DIEMSV D, MONHOC M
+ WHERE S.MSSV = D.MSSV AND M.MAMH = D.MAMH AND TENMH = N'Toán rời rạc'
+)
 
 --18-	Cho biết sinh viên có năm sinh cùng với sinh viên tên ‘Danh’.
-
+SELECT HOTEN
+FROM SINHVIEN
+WHERE YEAR(NTNS) = (
+ SELECT YEAR(NTNS)
+ FROM SINHVIEN
+ WHERE HOTEN LIKE '%Danh'
+)
 --19-	Cho biết tổng sinh viên và tổng số sinh viên nữ.
+SELECT COUNT(MSSV) AS 'TONG SINH VIEN', COUNT(CASE 
+WHEN PHAI = '0' THEN 1
+ELSE NULL END) AS 'TONG SINH VIEN NU'
+FROM SINHVIEN
 
 --20-	Cho biết danh sách các sinh viên rớt ít nhất 1 môn.
-
+SELECT HOTEN
+FROM SINHVIEN S, DIEMSV D
+WHERE S.MSSV = D.MSSV AND DIEM < 5
 --21-	Cho biết MSSV, Họ tên SV đã học và có điểm ít nhất 3 môn.
-
---22-	In danh sách sinh viên có điểm môn ‘Kỹ thuật lập trình’ cao nhất theo từng lớp.
-
+SELECT HOTEN 
+FROM SINHVIEN S, DIEMSV D
+WHERE S.MSSV = D.MSSV
+GROUP BY HOTEN
+HAVING COUNT(DIEM) >= 3
+--22-	In danh sách sinh viên có điểm môn
+--‘Kỹ thuật lập trình’ cao nhất theo từng lớp.
 --KẾT QUẢ CỦA SINH VIÊN
 
 --ĐIỂM CAO NHẤT CỦA TỪNG LỚP MÔN KỸ THUẬT LẬP TRÌNH
+--CÁCH 1
+SELECT A.MALOP, A.HOTEN, A.TENMH, A.[DIEM CAO NHAT]
+FROM
+(
+   SELECT MALOP , HOTEN, TENMH, MAX(DIEM) AS 'DIEM CAO NHAT'
+   FROM SINHVIEN S, DIEMSV D, MONHOC M
+   WHERE S.MSSV = D.MSSV AND D.MAMH = M.MAMH AND TENMH = N'Kỹ thuật lập trình'
+   GROUP BY MALOP , HOTEN, TENMH
+) A 
+JOIN
+(
+SELECT MALOP, MAX(DIEM) AS 'DIEM CAO NHAT LOP'
+FROM SINHVIEN S, DIEMSV D
+WHERE S.MSSV = D.MSSV
+GROUP BY MALOP
+) B ON A.MALOP = B.MALOP
+
+WHERE A.[DIEM CAO NHAT] = B.[DIEM CAO NHAT LOP]
+
+--CÁCH 2
+SELECT S.HOTEN, L.TENLOP, D.DIEM
+FROM SINHVIEN S, MONHOC M, DIEMSV D, LOP L
+WHERE  S.MSSV = D.MSSV AND D.MAMH = M.MAMH
+AND M.TENMH = N'Kỹ thuật lập trình'
+AND D.DIEM = (
+    SELECT MAX(D2.DIEM)
+    FROM SINHVIEN S2
+    JOIN DIEMSV D2 ON S2.MSSV = D2.MSSV
+    JOIN LOP L2 ON S2.MALOP = L2.MALOP
+    WHERE L2.TENLOP = L.TENLOP AND D2.MAMH = M.MAMH
+);
 
 --23-	In danh sách sinh viên có điểm cao nhất theo từng môn, từng lớp.
-
 --KẾT QUẢ THI CỦA SINH VIÊN
-
 --ĐIỂM CAO NHẤT CỦA TỪNG MÔN THEO TỪNG LỚP
-
-
-
+--CÁCH 1
+SELECT A.MALOP, A.HOTEN, A.TENMH, A.[DIEM CAO NHAT]
+FROM
+(
+   SELECT MALOP , HOTEN, TENMH, MAX(DIEM) AS 'DIEM CAO NHAT'
+   FROM SINHVIEN S, DIEMSV D, MONHOC M
+   WHERE S.MSSV = D.MSSV AND D.MAMH = M.MAMH
+   GROUP BY MALOP , HOTEN, TENMH
+) A 
+JOIN
+(
+SELECT MALOP, TENMH, MAX(DIEM) AS 'DIEM CAO NHAT MON'
+FROM MONHOC M, DIEMSV D, SINHVIEN S
+WHERE D.MAMH = M.MAMH AND S.MSSV = D.MSSV
+GROUP BY TENMH, MALOP
+) B ON A.TENMH = B.TENMH
+WHERE A.[DIEM CAO NHAT] = B.[DIEM CAO NHAT MON]
+--CÁCH 2
+SELECT S.HOTEN, L.TENLOP, M.TENMH, D.DIEM
+FROM SINHVIEN S, MONHOC M, DIEMSV D, LOP L
+WHERE  S.MSSV = D.MSSV AND D.MAMH = M.MAMH
+AND D.DIEM = (
+    SELECT MAX(D2.DIEM)
+    FROM SINHVIEN S2
+    JOIN DIEMSV D2 ON S2.MSSV = D2.MSSV
+    JOIN LOP L2 ON S2.MALOP = L2.MALOP
+    WHERE L2.TENLOP = L.TENLOP AND D2.MAMH = M.MAMH
+);
 --24-	Cho biết những sinh viên đạt điểm cao nhất của từng môn.
+--CÁCH 1
+SELECT A.MALOP, A.HOTEN, A.TENMH, A.[DIEM CAO NHAT]
+FROM
+(
+   SELECT MALOP , HOTEN, TENMH, MAX(DIEM) AS 'DIEM CAO NHAT'
+   FROM SINHVIEN S, DIEMSV D, MONHOC M
+   WHERE S.MSSV = D.MSSV AND D.MAMH = M.MAMH
+   GROUP BY MALOP , HOTEN, TENMH
+) A 
+JOIN
+(
+SELECT TENMH, MAX(DIEM) AS 'DIEM CAO NHAT MON'
+FROM MONHOC M, DIEMSV D
+WHERE D.MAMH = M.MAMH
+GROUP BY TENMH
+) B ON A.TENMH = B.TENMH
 
-
+WHERE A.[DIEM CAO NHAT] = B.[DIEM CAO NHAT MON]
+--CÁCH 2
+SELECT S.HOTEN, M.TENMH, D.DIEM
+FROM SINHVIEN S, MONHOC M, DIEMSV D
+WHERE  S.MSSV = D.MSSV AND D.MAMH = M.MAMH
+AND D.DIEM = (
+    SELECT MAX(D2.DIEM)
+    FROM SINHVIEN S2
+    JOIN DIEMSV D2 ON S2.MSSV = D2.MSSV
+    WHERE D2.MAMH = M.MAMH
+);
 --25-	Cho biết MSSV, Họ tên SV chưa đăng ký học môn nào.
-
+SELECT S.MSSV, HOTEN
+FROM SINHVIEN S, DIEMSV D
+WHERE S.MSSV = D.MSSV AND S.MSSV NOT IN (
+   SELECT MSSV
+   FROM DIEMSV
+)
+--CÁCH 2
+SELECT S.MSSV, HOTEN
+FROM SINHVIEN S
+LEFT JOIN
+DIEMSV D ON S.MSSV = D.MSSV
+WHERE D.MSSV IS NULL
 --27-	Đếm số sinh viên nam, nữ theo từng lớp.
+SELECT MALOP, COUNT(CASE
+WHEN PHAI = '1' THEN 1
+ELSE NULL END) AS 'TONG SINHVIEN NAM',
+COUNT(CASE
+WHEN PHAI = '0' THEN 1
+ELSE NULL END) AS 'TONG SINHVIEN NU'
+FROM SINHVIEN 
+GROUP BY MALOP
+
 
 --28-	Cho biết những sinh viên đã học tất cả các môn nhưng không rớt môn nào.
 
+SELECT HOTEN
+FROM SINHVIEN S, DIEMSV D, MONHOC M
+WHERE S.MSSV = D.MSSV AND M.MAMH = D.MAMH
+GROUP BY HOTEN
+HAVING COUNT(CASE WHEN DIEM >= 5 THEN 1
+ELSE NULL END) = COUNT(M.MAMH)
+
 --29-	Xoá tất cả những sinh viên chưa dự thi môn nào.
+SELECT * INTO TEST_SINHVIEN
+FROM SINHVIEN
+
+SELECT *
+FROM TEST_SINHVIEN
+
+DELETE FROM TEST_SINHVIEN
+WHERE MSSV NOT IN(
+  SELECT MSSV
+  FROM DIEMSV
+)
 
 --30-	Cho biết những môn đã được tất cả các sinh viên đăng ký học.
+
+SELECT TENMH
+FROM DIEMSV D, MONHOC M
+WHERE D.MAMH = M.MAMH 
+GROUP BY TENMH
+HAVING COUNT(D.MAMH) = (
+    SELECT COUNT(MSSV)
+    FROM SINHVIEN
+)
 
